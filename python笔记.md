@@ -345,8 +345,6 @@ Python代码中经常使用类型转换。我们使用类型的名称将值转�
 
 指示Python使用UTF-8编码类型，这是万维网页面最常用的字符编码。一般而言，如果没有在程序的开头注释编码类型，python将会自动使用UTF-8类型
 
-
-
 而当使用UTF-8时，你可以在编辑器中直接输入以下的代码
 
 ```python
@@ -358,3 +356,201 @@ shell中会输出
 
 Mluvíš anglicky?
 क्या आप अंग्रेज़ी बोलते हैं?
+
+### 2.4 Iteration（迭代）
+
+在结束第2.2节时，我们注意到大多数计算任务不能使用分支程序来完成。例如，考虑编写一个程序，询问用户要打印多少次字母X，然后打印一个带有该数字X的字符串。我们也许会想要编写下面的程序
+
+```python
+numXs = int(input('How many times should I print the letter X? '))
+toPrint = ''
+if numXs == 1:
+    toPrint = 'X'
+elif numXs == 2:
+    toPrint = 'XX'
+elif numXs == 3:
+    toPrint = 'XXX'
+#...
+print(toPrint)
+```
+
+
+
+但很快就会发现，我们需要的条件和正整数一样多，而且正整数的数量是无限的。我们需要的是一个下面的条件
+
+```python
+numXs = int(input('How many times should I print the letter X? '))
+toPrint = ''
+concatenate X to toPrint numXs times
+print(toPrint)
+```
+
+当我们想让一个程序多次做同样的事情时，我们可以使用迭代。
+图2.4的boxedin部分显示了一种通用的迭代（也称为循环）机制。与条件语句一样，它以测试开始。如果测试的结果为True，程序将执行一次循环体，然后返回以重新评估测试。重复此过程，直到测试的计算结果为False，然后控制传递给迭代语句后面的代码。
+
+我们可以使用while语句编写图2.4中描述的循环。考虑以下示例：
+
+```python
+# Square an integer, the hard way
+x = 3
+ans = 0
+itersLeft = x
+while (itersLeft != 0):
+     ans = ans + x
+     itersLeft = itersLeft - 1
+print(str(x) + '*' + str(x) + ' = ' + str(ans))
+```
+
+
+
+![image-20210508141613302](C:\Users\Lenovo\AppData\Roaming\Typora\typora-user-images\image-20210508141613302.png)
+
+这个代码存在一个问题，如何解决x<0时的情况？当x<0时，每一次循环都会将x变得愈来愈小并且一直远离0，这会使程序一直运行下去。一种解决方案是将itself变量在初始化时初始化为x的绝对值，不过这会使输出结果为负值，不过我们只要对ans稍加改动即可，比如ans=ans+abs（x)，问题就解决了
+
+使用‘break’可以在不用测试循环条件的情况下退出循环，并紧接着执行位于整体循环后面的代码，比如
+
+```python
+#Find a positive integer that is divisible by both 11 and 12
+x = 1
+while True:
+   if x%11 == 0 and x%12 == 0:
+        break
+   x = x + 1
+print(x, 'is divisible by 11 and 12')
+```
+
+的输出是
+
+132 is divisible by 11 and 12
+
+如果在嵌套循环（另一个循环中的循环）内执行break语句，则break将终止内部循环。
+现在我们已经介绍了Python的几乎所有知识，这些知识是我们开始编写处理数字和字符串的有趣程序所需要的。
+
+### 3 SOME SIMPLE NUMERICAL PROGRAMS
+
+既然我们已经介绍了一些基本的Python构造，现在是时候开始考虑如何组合这些构造来编写一些简单的程序了。
+在这个过程中，我们将偷偷地介绍一些更多的语言结构和一些算法技术。
+
+### 3.1 Exhaustive Enumeration（穷举）
+
+下面的代码表示求一个输入整数的立方根，如果输入数字的立方根非整数，会输出一行消息
+
+```python
+#Find the cube root of a perfect cube
+x = int(input('Enter an integer: '))
+ans = 0
+while ans**3 < abs(x):
+    ans = ans + 1
+if ans**3 != abs(x):
+    print(x, 'is not a perfect cube')
+else:
+    if x < 0:
+       ans = -ans
+    print('Cube root of', x,'is', ans)
+```
+
+这个程序会在x取何值时终止？答案是“所有整数”，这一点很简单。
+
+•表达式ans**3的值从0开始，每次通过循环都会变大。
+
+•当达到或超过abs（x）时，循环终止。
+
+•由于abs（x）始终为正，因此在循环终止之前，迭代次数必然有限。
+
+当你在编写一个循环时，都应该考虑适当的递减函数（decrementing function）。这是一个具有以下属性的函数
+
+• It maps a set of program variables into an integer.
+
+• When the loop is entered, its value is nonnegative.
+
+• When its value is ≤ 0, the loop terminates.
+
+• Its value is decreased every time through the loop.
+
+当我们将程序中的'ans=ans+1'修改为'ans=ans'时
+
+程序将永远运行，因为循环体不再缩短ans**3和abs（x）之间的距离。当遇到一个似乎不会终止循环的程序时，有经验的程序员经常插入print语句，比如这里的语句，以测试递减函数是否确实在递减。
+在这个程序中使用的算法技术是一个称为穷举法或枚举法的方法。我们列举所有的可能性，直到我们得到正确的答案或用尽可能的空间。乍一看，这似乎是一种极其愚蠢的解决问题的方法。然而，令人惊讶的是，穷举枚举算法通常是解决问题的最实用的方法。它们通常易于实现和理解。而且，在许多情况下，它们的运行速度足以满足实际用途。确保删除或注释掉插入的print语句并重新插入语句ans=ans+1，然后尝试查找1957816251的立方根。程序几乎会在瞬间完成。现在，试7406961012236344616
+
+如你所见，即使需要数百万次的猜测，这通常也不是问题。现代计算机速度惊人。执行一条指令仅需要一纳秒到十亿分之一秒的时间。
+
+### 3.2 For Loops
+
+我们现在为止所使用的while语句是高度固定化的，为了简化这类迭代程序，python提供了一种for语言机制，其一般形式是
+
+for variable in sequence:
+
+code block
+
+for后面的变量绑定到序列中的第一个值，并执行代码块。然后，该变量被赋予序列中的第二个值，并且再次执行代码块。该过程将持续直到序列结束或在代码块内执行break语句为止
+
+绑定到变量的值序列通常使用内置函数range生成，该函数返回一系列整数。range函数按顺序接受三个整数参数：start、stop和step。它会产生这样的指令：start，start+step，start+2*step，等等。假如step是正数，那么这个序列的最后一个元素是小于stop所代表的整数的最大的start+i*step
+
+换言之，这是一个等差数列，start表示等差数列的第一项；step表示步长（公差）；而stop则表示这个数列所能允许的最大值（数列中的元素不能超过这个值，等于也不行）
+
+在step小于0时，同理我们可以得到以上的规则，不同的是，这时stop表示的是这个数列所能允许的最小值
+
+举例来说，range(5, 40, 10)可以得到一个元素为5，15，25，35的序列；而range(40, 5, -10)则会得到一个元素为40，30，20，10的序列。如果省略第一个参数（起点），则系统会默认它时0，而如果省略最后一个参数（步长），那么系统会默认它是1
+
+考虑以下的代码
+
+```python
+x = 4
+for i in range(0, x):
+     print(i)
+```
+
+其输出是0123
+
+但如果我们将代码修改如下
+
+```python
+x = 4
+for i in range(0, x):
+      print(i)
+      x = 5
+```
+
+这里有一个问题，即在循环中更改x的值是否会影响迭代次数。事实上并没有，for行中range函数的参数在循环的第一次迭代之前即进行求值，而不是在随后的迭代中重新求值（注：在进行了一次迭代以后，x的值已经被修改成5，但这并不影响序列的范围），在脱离这个循环以前，序列的范围都不会被改变，但在循环嵌套中这一点有所改变，例如
+
+```python
+x = 4
+for j in range(x):
+   for i in range(x):
+       print(i)
+       x = 2
+```
+
+的输出是
+
+0
+1
+2
+3
+0
+1
+0
+1
+0
+1
+
+原因在于当j=0时，进入第一次循环，此时x=4，因此序列的范围还未改变；而当第一次循环结束时，x的值已经被修改成2，因而在进入i的第二次循环时（此时外部循环还未结束，j取到序列的第二个值1），对于第二个循环来讲，x=4这件事已经是过去的事了，现在x=2，故只会输出01.
+
+换言之，外循环中的range函数只求值一次，而内循环中的range函数则在每次开始for语句时求值。
+
+图3.2中的代码重新实现了寻找立方根的穷举枚举算法。for循环中的break语句使循环在对其迭代的序列中的每个元素运行之前终止。
+
+```python
+#Find the cube root of a perfect cube
+x = int(input('Enter an integer: '))
+for ans in range(0, abs(x)+1):
+    if ans**3 >= abs(x):
+        break
+if ans**3 != abs(x):
+    print(x, 'is not a perfect cube')
+else:
+    if x < 0:
+         ans = -ans
+    print('Cube root of', x,'is', ans)
+```
+
