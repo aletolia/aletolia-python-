@@ -554,3 +554,60 @@ else:
     print('Cube root of', x,'is', ans)
 ```
 
+for语句可以与in运算符结合使用，以方便地对字符串的字符进行迭代。例如，
+
+```python
+total = 0
+for c in '12345678':
+    total = total + int(c)
+print(total)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
