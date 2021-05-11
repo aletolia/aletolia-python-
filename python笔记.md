@@ -791,25 +791,63 @@ def是一个保留字，它告诉Python函数即将被定义。 函数名称（�
 
 函数的参数提供了一种名为“lambda abstraction”的东西，我们马上就会看到，我们现在所说的函数比数学上所定义的函数的范围要大得多，“lambda abstraction”允许程序员编写的代码并非是指定特定的对象，而可以是通过函数调用这一命令来选择用作实参的任意对象
 
+### 4.1.2 Keyword Arguments and Default Values（关键字参数和默认值）
 
+在Python中，有两种方法可以将形式参数绑定到实际参数。
+最常用的方法是positional（也就是按位置顺序从左到右给形参赋值），这是我们迄今为止唯一使用的方法。第一个形式参数绑定到第一个实际参数，第二个形式参数绑定到第二个实际参数，等等。Python还支持关键字参数，其中形式参数使用形式参数的名称绑定到实际值。考虑函数定义 
 
+```python
+def printName(firstName, lastName, reverse):
+    if reverse:
+         print(lastName + ', ' + firstName)
+    else:
+         print(firstName, lastName)
+```
 
+函数printName假设firstName和lastName是字符串，reverse是布尔值。如果reverse==True，则打印lastName、firstName，否则打印firstName lastName。
+以下每一项都是对printName的等效调用：
 
+```python
+printName('Olga', 'Puchmajerova', False)
+printName('Olga', 'Puchmajerova', reverse = False)
+printName('Olga', lastName = 'Puchmajerova', reverse = False)
+printName(lastName = 'Puchmajerova', firstName = ' Olga',reverse = False)
+```
 
+尽管关键字参数可以以任何顺序出现在实际参数列表中，但在关键字参数后面加上非关键字参数是不合法的。
+例如
 
+```python
+printName('Olga', lastName = 'Puchmajerova', False)
+```
 
+在上面的错误范例中，关键字参数‘lastname’后面加上了一个‘false’，尽管函数调用的参数中确实有一个布尔值变量，但由于是在关键字参数后面，因此必须也写成关键字参数的形式
 
+关键字参数通常与默认参数值（defalut parameter values)一起使用。例如，
 
+```python
+def printName(firstName, lastName, reverse = False):
+    if reverse:
+         print(lastName + ', ' + firstName)
+    else:
+         print(firstName, lastName)
+```
 
+默认值允许程序员使用少于指定数量的参数调用函数。在这里，函数在定义时已经事先声明了布尔值为false，在调用函数时，如果不说明布尔值为何，则默认为false，例如
 
+```python
+printName('Olga', 'Puchmajerova')
+printName('Olga', 'Puchmajerova', True)
+printName('Olga', 'Puchmajerova', reverse = True)
+```
 
+的输出是
 
-
-
-
-
-
-
+```python
+Olga Puchmajerova
+Puchmajerova, Olga
+Puchmajerova, Olga
+```
 
 
 
