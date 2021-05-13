@@ -849,9 +849,15 @@ Puchmajerova, Olga
 Puchmajerova, Olga
 ```
 
+printName的最后两个调用在语义上是等价的。最后一种方法的优点是为可能存在的true提供了回旋余地
 
+###  4.1.3 Scoping（范围界定）
 
+让我们看看下面这个例子
 
+```
+
+```
 
 
 
