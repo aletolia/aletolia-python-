@@ -855,9 +855,235 @@ printName的最后两个调用在语义上是等价的。最后一种方法的�
 
 让我们看看下面这个例子
 
+```python
+def f(x): #name x used as formal parameter
+   y = 1
+   x = x + y
+   print('x =', x)
+   return x
+
+x = 3
+y = 2
+z = f(x) #value of x used as actual parameter
+print('z =', z)
+print('x =', x)
+print('y =', y)
 ```
 
+当其运行时，其输出是
+
+```python
+x = 4
+z = 4
+x = 3
+y = 2
 ```
+
+这是怎么回事？在调用f时，形式参数x将会被赋予实际参数x的值。需要注意的是，尽管实际参数和形式参数具有相同的名称，但它们不是相同的变量。
+
+每个函数定义一个新的name space，也称为作用域（scope）。f中使用的形式参数x和局部变量y只存在于f的定义范围内。函数体中的赋值语句x=x+y将变量x的值赋为4。f中的赋值行为对f范围之外的变量x和y的赋值没有任何影响。
+
+这里有一个方法来思考这一现象
+
+1.在顶层，即shell层次，符号表（symbol tabel）会跟踪在该层次定义的所有变量名称及这些变量名称当前被赋给的值。
+
+2.调用函数时，会创建一个新的符号表（通常称为堆栈帧（stack frame）。此表跟踪函数中定义的所有变量名称（包括形式参数）及其当前值。如果从函数体中调用函数，则会创建另一个堆栈帧。
+
+3.函数完成后，其堆栈帧将消失。
+
+在Python中，可以通过查看程序文本来确定名称的范围。这称为static或lexical scoping。如下面的示例所示
+
+```python
+def f(x):
+   def g():
+      x = 'abc'
+      print('x =', x)
+   def h():
+      z = x
+      print('z =', z)
+   x = x + 1
+   print('x =', x)
+   h()
+   g()
+   print('x =', x)
+   return g
+
+
+x = 3
+z = f(x)
+print('x =', x)
+print('z =', z)
+z()
+```
+
+与代码相关联的堆栈帧的历史记录如下图所示
+第一列除函数f内部变量名的已知的一组变量名称，即变量x和z以及函数名f。第一个赋值语句将x绑定到3。
+
+![image-20210513143025255](C:\Users\Lenovo\AppData\Roaming\Typora\typora-user-images\image-20210513143025255.png)
+
+赋值语句z=f（x）首先通过使用x所绑定的值调用函数f来计算表达式f（x）。当输入f时，将创建一个堆栈帧，如第2列所示。堆栈框架中的名称是x（形式参数，而不是函数外的变量名x）、g和h。变量g和h与function类型的对象绑定。
+
+这些函数的性质由f中的函数定义给出。当从f中调用h时，会创建另一个堆栈帧，如第3列所示。可以看到，该堆栈帧中仅包含局部变量z。为什么它不包含x？仅当该变量作为函数的形参或者该变量在函数体内被赋值的时候（形象地说，这个变量出现在了赋值语句的左边），才会将该名称添加到与函数关联的作用域中。在h的主体中，x只出现在赋值语句的右侧。
+
+如果一个变量名称（在本例中为x）在函数体中（本例中是函数h）没有被赋予任何类型的值（可以是int，float等类型），则解释器会在包含这个函数名的堆栈帧中寻找这个变量名称（在本例中是定义f时所产生的堆栈帧，这个堆栈帧中包含h这一函数名）。如果找到了该变量名称（在本例中是这样），则使用它绑定到的值（4）。如果在那里找不到，则会生成错误消息。
+
+当h返回时，与h调用相关联的堆栈帧消失（从堆栈顶部弹出），如第4列所示。请注意，我们从不从堆栈的中间删除帧，而只删除最近添加的帧。正是因为它有这种“后进先出”的行为，我们才把它称为stake（想象一下在自助餐厅里有一堆托盘等着拿）。
+
+接下来调用g，并添加一个包含g的局部变量x的堆栈帧（第5列）。当g返回时，该帧弹出（第6列）。当f返回时，将弹出包含与f关联的名称的堆栈帧，使我们返回到原始堆栈帧（第7列）。
+
+注意，当f返回时，即使变量g不再存在，该名称曾经绑定到的function类型的对象仍然存在。这是因为函数是对象，可以像任何其他类型的对象一样返回。
+
+因此，z可以被赋予f返回的值，函数call z（）可以用来调用在f中绑定到名称g的函数，即使函数g在函数f之外根本没有被定义
+
+从而该代码的输出是
+
+```python
+x = 4
+z = 4
+x = abc
+x = 4
+x = 3
+z = <function f.<locals>.g at 0x1092a7510>
+x = abc
+```
+
+在函数体中，假如要使用本地变量，这个本地变量的赋值语句必须写在所有的表达式和命令之前，这是因为假如在一个函数体中出现了对一个变量的赋值语句，则即使该赋值语句是出现在一个表达式或者一条命令的后面，它也将会被视作该函数中的局部变量，这回出现一些问题，例如
+
+```python
+def f():
+    print(x)
+def g():
+    print(x)
+    x = 1
+x = 3
+f()
+x = 3
+g()
+```
+
+在执行代码后，程序会报错
+
+```python
+UnboundLocalError: local variable 'x' referenced before assignment
+```
+
+这是因为print语句后面的赋值语句导致x变为g的局部变量。因为x是g的局部变量，所以在执行print语句时它没有值（还未被赋值）。 
+
+### 4.2 Specifications
+
+下面的代码定义了一个函数findRoot，它包含了我们在此前所提出的对分搜索算法。它还包含一个函数testFindRoot，可以用来测试findRoot是否按预期工作
+
+```python
+def findRoot(x, power, epsilon):
+     """Assumes x and epsilon int or float, power an int,
+                 epsilon > 0 & power >= 1
+        Returns float y such that y**power is within epsilon of x.
+               If such a float does not exist, it returns None"""
+     if x < 0 and power%2 == 0: #Negative number has no even-powered
+                        #roots
+        return None
+    low = min(-1.0, x)
+    high = max(1.0, x)
+    ans = (high + low)/2.0
+    while abs(ans**power - x) >= epsilon:
+         if ans**power < x:
+                low = ans
+         else:
+                high = ans
+         ans = (high + low)/2.0
+    return ans
+
+def testFindRoot():
+    epsilon = 0.0001
+    for x in [0.25, -0.25, 2, -2, 8, -8]:
+        for power in range(1, 4):
+             print('Testing x =', str(x), 'and power = ', power)
+             result = findRoot(x, power, epsilon)
+             if result == None:
+                  print('  No root')
+             else:
+                  print(' ', result**power, '~=', x)
+```
+
+函数testFindRoot几乎和findRoot本身一样长。对于没有经验的程序员来说，编写这样的测试函数似乎常常是一种浪费。然而，经验丰富的程序员知道，在编写测试代码方面的投资往往会带来巨大的回报。它当然比在调试过程中一次又一次地在shell中输入测试用例要好得多（找出程序不工作的原因，然后修复它的过程）。这也迫使我们思考哪些测试可能最具启发性。
+三个引号之间的文本在Python中称为docstring。按照惯例，Python程序员使用docstring来提供函数的规范。可以使用内置函数help访问这些docstring。例如，如果我们进入shell并键入help（abs），系统将显示
+
+```python
+Help on built-in function abs in module built-ins:
+    
+abs(x)
+     Return the absolute value of the argument.
+```
+
+而如果我们在shell中输入help（findRoot），shell就会显示
+
+```python
+findRoot(x, power, epsilon)
+Assumes x and epsilon int or float, power an int,
+epsilon > 0 & power >= 1
+Returns float y such that y**power is within epsilon of x.
+If such a float does not exist, it returns None
+```
+
+如果我们在编辑器中输入findRoot（，则将显示形式参数列表。
+
+函数的specification定义了函数的实现者和那些编写函数的程序员之间的约定。我们称函数的使用者为client。这个约定包含两部分：
+
+•Assumptions：所谓的“假设”描述了使用者在使用函数时必须满足的条件。通常，它们描述对实际参数的约束。“假设”会为每个参数（或者其中的数个）指定可接受的类型集（比如进入函数的参数应该满足一些什么条件，否则会报错或者返回none），并且经常对一个或多个参数的值进行一些约束。
+例如，findRoot的docstring的前两行描述了findRoot的使用者（调用时）必须满足的假设。
+•Guarantee：这些描述了函数必须满足的条件（即函数的功能，函数必须返回什么样的值），（前提是函数以满足假设的方式调用）。findRoot的docstring的最后两行描述了函数实现必须满足的保证。
+
+函数是一种产生计算元素的方式，就像我们的内置函数max或者abs一样，我们希望产生一个内置函数进行求根操作或者其他的复杂操作，函数通过将我们的目的分解开和将这个目的抽象化做到了这一点
+
+分解（decomposition）产生了结构。它允许我们将程序分解为许多互相之间独立的部分，就像线性空间中的基向量，这些部分之间互相组合，又能构成一个完整的程序
+
+抽象（abstraction）隐藏细节。它允许我们使用像一个黑匣子一样的代码，也就是说，它的内部细节我们看不到，实际上，我们不需要看到，甚至不应该看到。抽象的本质是保存在给定上下文中相关的信息，而忽略在该上下文中无关的信息。在编程中，我们需要真正了解我们编程的目的是什么，明白我们想要什么，并通过简明扼要的手法实现这一点，这才是真正的编程艺术。
+
+### 4.3 Recursion（递归）
+
+你也许听说过递归，并且很可能认为它是一种相当高深的编程技术。其实这只是外界的误解。递归是一个非常重要的概念，但它并不那么高深，它也不仅仅是一种编程技术。
+
+作为一种描述性方法，递归被广泛使用，即使是那些从未想过要编写程序的人，他们在日常生活中也会经常碰到“递归”这一概念。想想美国法典中定义“天生”公民概念的一部分。大致来说，定义如下
+
+•任何在美国境内出生的孩子，
+
+•任何在美国境外结婚出生的孩子，只要父母一方在孩子出生前在美国居住，以及
+
+•任何在美国境外婚生子女，其父母之一是美国公民，且在子女出生前至少在美国居住了五年，前提是这些年中至少有两年是在该公民的十四岁生日之后
+
+第一点十分简单易懂，如果你出生在美国，你就是一个天生的美国公民（比如巴拉克奥巴马）。如果你不是在美国出生的，那么决定你是否是美国公民的因素在于你的父母是不是美国公民（自然出生或归化）。而要确定你的父母是否是美国公民，你可能得看看你的祖父母，等等。
+
+一般来说，递归定义由两部分组成。至少有一个base case会直接指定特殊情况的结果（上例中的情况1），并且至少有一个递归（归纳）情况（上例中的情况2和3）根据某个其他问题的答案来定义答案，通常是同一问题的更简单版本。
+
+世界上最简单的递归定义可能是自然数的阶乘这一概念（通常在数学中使用！表述）。经典的归纳定义是
+$$
+1！=1
+$$
+
+$$
+(n+1)!=(n+1)*n!
+$$
+
+第一个等式定义了基本情况。第二个等式定义了除基本情况外的所有自然数的阶乘，即前一个数的阶乘。
+
+下面的代码包含了阶乘的迭代（factI）和递归（factR）实现。
+
+```python
+def factI(n):                   def factrR(n):
+"""Assumes n an int > 0         """Assumes n an int > 0 Returns n!"""                   Returns n!"""
+result = 1                      if n == 1:
+while n > 1:                       return n
+   result = result * n          else:
+   n-=1                            return n*factR(n - 1)
+return result
+
+```
+
+这个函数非常简单，用两种方法都不难实现。不过，第二个是对原始递归定义的更贴切的解释。
+
+从factR的内部调用factR来实现factR几乎像是作弊。它的工作原理与迭代实现的工作原理相同。我们知道迭代实际上会终止，因为n开始时是正的，每次循环都会减少1。这意味着它不能永远大于1。类似地，如果用1调用factR，它将返回一个值而不进行递归调用。当它确实进行递归调用时，它总是使用比调用它时使用的值小一的值来执行。最终，递归终止于调用factR（1）。
+
+### 4.3.1 Fibonacci Numbers（斐波那契数列）
 
 
 
