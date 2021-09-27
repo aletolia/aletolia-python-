@@ -1,6 +1,6 @@
 # aletolia-python
 introduction to computation and programing using python
-### CHAPTER 1 GETTING START
+## CHAPTER 1 GETTING START
 1.计算机可以做些什么？
 
 事实上，计算机只执行了两项工作，一是计算，二是储存计算结果。
